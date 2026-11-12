@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#176b55">
+<title>九九で発見！日本の野鳥図鑑</title>
+<style>
+:root{--green:#176b55;--mint:#e8f5ef;--ink:#20332c;--gold:#f3bd4f;--paper:#fbfdfb}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eaf6ef,#f8fbf8 360px);font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:var(--ink)}
+main{max-width:850px;margin:auto;padding:20px 16px 48px}
+header{text-align:center;padding:14px 0 20px}h1{font-size:clamp(26px,5vw,40px);margin:8px 0;color:var(--green)}header p{margin:0;color:#587267}
+.panel{background:white;border:1px solid #dcebe2;border-radius:22px;padding:20px;box-shadow:0 8px 24px #164d3210;margin:14px 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:var(--mint);border-radius:15px;padding:12px;text-align:center}.stat strong{display:block;font-size:26px;color:var(--green)}.stat span{font-size:12px;color:#557267}
+.progress{height:12px;background:#e8eee9;border-radius:99px;overflow:hidden;margin:12px 0 4px}.bar{height:100%;background:linear-gradient(90deg,#45a879,#9acb65);width:0%;transition:width .25s}
+.question{text-align:center;padding:12px 0 4px}.question .label{font-size:14px;color:#698075}.equation{font-size:clamp(52px,12vw,82px);font-weight:850;letter-spacing:2px;color:#183f31;margin:6px 0 14px}
+input{font:inherit;font-size:28px;font-weight:700;text-align:center;width:150px;padding:10px;border:2px solid #b8d5c4;border-radius:14px;outline:none}input:focus{border-color:var(--green);box-shadow:0 0 0 3px #176b5520}
+button{font:inherit;font-weight:750;border:0;border-radius:13px;padding:12px 20px;background:var(--green);color:white;cursor:pointer}button:active{transform:translateY(1px)}button.secondary{background:#edf5ef;color:var(--green);border:1px solid #d6e8dc}.answerrow{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+#feedback{min-height:30px;text-align:center;font-weight:700;margin:12px 0 0} .good{color:#16834f}.bad{color:#b54b3b}
+.timer-wrap{max-width:330px;margin:12px auto 18px;text-align:left}.timer-top{display:flex;justify-content:space-between;align-items:center;color:#567366;font-size:14px}.timer-top strong{font-size:21px;color:var(--green)}.timer-track{height:12px;background:#e8eee9;border-radius:99px;overflow:hidden;margin-top:5px}#timerBar{height:100%;width:100%;background:#39a66f;transition:width .25s linear,background .2s}
+.keypad{display:grid;touch-action:manipulation;grid-template-columns:repeat(3,minmax(62px,86px));gap:8px;justify-content:center;margin:16px auto 4px}.keypad .key{min-height:52px;touch-action:manipulation;padding:12px 8px;font-size:23px;background:#edf5ef;color:var(--green);border:1px solid #d6e8dc;box-shadow:0 2px 0 #d5e5da}.keypad .key.utility{font-size:14px;background:#f5f2e9;color:#725d2c}.keypad .key:active{background:#d8ebdf;box-shadow:none}
+.sound-notice{min-height:22px;text-align:center;font-size:13px;color:#916b20}.next{display:none;margin:14px auto 0}
+.birdhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.birdhead h2{margin:0;color:var(--green);font-size:21px}.small{font-size:13px;color:#718278}
+.collection{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;margin-top:14px}
+.bird{border:1px solid #dce9df;border-radius:16px;overflow:hidden;background:#fff}.bird img{display:block;width:100%;height:115px;object-fit:cover;background:#edf3ee}.bird .meta{padding:9px 10px}.bird strong{display:block}.bird small{color:#6c7e73}
+.locked{height:115px;display:grid;place-items:center;background:repeating-linear-gradient(135deg,#edf3ee,#edf3ee 10px,#e4ece6 10px,#e4ece6 20px);font-size:30px;color:#9aafa1}.locked + .meta{color:#87968c}
+.note{font-size:12px;line-height:1.6;color:#74847a;margin-top:12px}
+.overlay{position:fixed;inset:0;background:#10251dcc;display:none;place-items:center;padding:18px;z-index:5}.modal{background:white;border-radius:22px;max-width:440px;width:100%;padding:22px;text-align:center}.modal img{width:100%;height:210px;object-fit:cover;border-radius:14px;background:#edf3ee}.modal h2{color:var(--green);margin:12px 0 4px}.modal p{color:#5d7065}
+footer{text-align:center;color:#7b8a80;font-size:12px;margin-top:20px}
+@media(max-width:520px){main{padding:12px}.panel{padding:16px}.stats{grid-template-columns:repeat(2,1fr);gap:6px}.stat{padding:9px 5px}.stat strong{font-size:22px}}
+</style>
+</head>
+<body>
+<main>
+<header><div style="font-size:38px">🐦 🌿 🐦</div><h1>九九で発見！日本の野鳥図鑑</h1><p>九九に挑戦して、野鳥を30種類集めよう！</p></header>
+<section class="panel">
+ <div class="stats">
+  <div class="stat"><strong id="correct">0</strong><span>正解数</span></div>
+  <div class="stat"><strong id="count">0 / 30</strong><span>発見した野鳥</span></div>
+  <div class="stat"><strong id="streak">0</strong><span>連続正解</span></div>
+  <div class="stat"><strong id="totalStars">0</strong><span>獲得スター</span></div>
+ </div>
+ <div class="progress"><div class="bar" id="bar"></div></div>
+ <div class="small" id="progressText">あと10問正解で、最初の野鳥を発見！</div>
+</section>
+<section class="panel question">
+ <div class="label">つぎの九九に答えよう</div>
+ <div class="timer-wrap"><div class="timer-top"><span>⏱ のこり時間</span><strong><span id="time">15</span>秒</strong></div><div class="timer-track"><div id="timerBar"></div></div></div>
+ <div class="equation"><span id="a">3</span> × <span id="b">4</span> ＝ ?</div>
+ <form id="form" class="answerrow">
+  <input id="answer" type="text" inputmode="none" maxlength="2" readonly aria-label="答え" placeholder="？">
+  <button type="submit">こたえる！</button>
+ </form>
+ <div class="keypad" id="keypad" aria-label="数字入力パッド">
+  <button type="button" class="key" data-key="1">1</button><button type="button" class="key" data-key="2">2</button><button type="button" class="key" data-key="3">3</button>
+  <button type="button" class="key" data-key="4">4</button><button type="button" class="key" data-key="5">5</button><button type="button" class="key" data-key="6">6</button>
+  <button type="button" class="key" data-key="7">7</button><button type="button" class="key" data-key="8">8</button><button type="button" class="key" data-key="9">9</button>
+  <button type="button" class="key utility" data-key="clear">けす</button><button type="button" class="key" data-key="0">0</button><button type="button" class="key utility" data-key="back">⌫</button>
+ </div>
+ <div id="feedback" aria-live="polite"></div>
+ <div class="small" style="text-align:center;margin-top:5px">★ 5秒以内：3つ ／ 10秒以内：2つ ／ 15秒以内：1つ</div>
+ <div id="soundNotice" class="sound-notice" aria-live="polite"></div>
+ <button type="button" class="secondary" id="replaySound" style="display:none;margin:8px auto">🐦 鳥の声をもう一度きく</button>
+ <button class="secondary next" id="next">つぎの問題へ</button>
+</section>
+<section class="panel">
+ <div class="birdhead"><h2>📖 野鳥コレクション</h2><span class="small">10問正解ごとに1種類</span></div>
+ <div class="collection" id="collection"></div>
+ <p class="note">写真は Wikimedia Commons から取得します。インターネットに接続して遊んでください。写真が見つからない場合も、野鳥の名前は図鑑に登録されます。</p>
+</section>
+<footer>学習の記録は、このブラウザ内に保存されます。</footer>
+</main>
+<div class="overlay" id="overlay">
+ <div class="modal">
+  <div style="font-size:36px">🎉 🐦 🎉</div>
+  <h2>野鳥を発見したよ！</h2>
+  <img id="modalImg" alt="発見した野鳥の写真">
+  <h2 id="modalName"></h2><p id="modalDesc"></p>
+  <button id="close">図鑑に登録する！</button>
+ </div>
+</div>
+<script>
+const birds = [
+ ["スズメ","身近な場所で見られる小さな野鳥。"],
+ ["メジロ","目のまわりの白い輪が目印。花の蜜も大好き。"],
+ ["ハクセキレイ","長い尾を上下に振りながら歩く。"],
+ ["ヒヨドリ","ピーヨ、ピーヨとよく鳴く野鳥。"],
+ ["シジュウカラ","胸の黒いネクタイ模様が特徴。"],
+ ["ムクドリ","群れで行動することが多い野鳥。"],
+ ["ツバメ","春にやって来て、空をすばやく飛ぶ。"],
+ ["カワセミ","青く美しい羽を持つ水辺のハンター。"],
+ ["キジバト","デデッポッポーと鳴くハトの仲間。"],
+ ["コゲラ","木をつついて虫を探す日本最小のキツツキ。"],
+ ["ジョウビタキ","冬に見られる、翼の白い斑点が目印の鳥。"],
+ ["ルリビタキ","青い羽が美しい、森にすむ野鳥。"],
+ ["モズ","小さな体で大きな獲物もねらう。"],
+ ["アオサギ","水辺に立つ大きなサギの仲間。"],
+ ["カルガモ","くちばしの先が黄色い身近なカモ。"],
+ ["オナガ","長い尾と水色の羽が美しい。"],
+ ["エナガ","小さくて丸い、ふわふわした野鳥。"],
+ ["ヤマガラ","木の実を器用に扱う、胸がオレンジ色の鳥。"],
+ ["カワラヒワ","黄色い翼の模様が飛ぶと目立つ。"],
+ ["ウグイス","春のさえずり「ホーホケキョ」で有名。"],
+ ["オオルリ","青い羽と美しいさえずりで知られる。"],
+ ["キビタキ","黄色と黒の模様が鮮やかな夏鳥。"],
+ ["アカゲラ","頭やお腹に赤い色があるキツツキ。"],
+ ["ミサゴ","魚をつかまえるのが得意な猛禽類。"],
+ ["トビ","空で輪を描くように飛ぶタカの仲間。"],
+ ["フクロウ","夜に活動することが多い森の鳥。"],
+ ["ヤマセミ","大きな冠羽が特徴の水辺の鳥。"],
+ ["タンチョウ","頭頂部が赤い、優雅で大きなツル。"],
+ ["ライチョウ","高山にすみ、季節で羽の色が変わる。"],
+ ["コウノトリ","大きな翼を広げてゆったり飛ぶ希少な鳥。"]
+];
+const birdEnglish = [
+ "Eurasian tree sparrow","Japanese white-eye","Japanese wagtail","Brown-eared bulbul","Japanese tit",
+ "White-cheeked starling","Barn swallow","Common kingfisher","Oriental turtle dove","Japanese pygmy woodpecker",
+ "Daurian redstart","Red-flanked bluetail","Bull-headed shrike","Grey heron","Eastern spot-billed duck",
+ "Azure-winged magpie","Long-tailed tit","Varied tit","Oriental greenfinch","Japanese bush warbler",
+ "Blue-and-white flycatcher","Narcissus flycatcher","Great spotted woodpecker","Osprey","Black kite",
+ "Ural owl","Crested kingfisher","Red-crowned crane","Japanese rock ptarmigan","Oriental stork"
+];
+const key="wildbird九九_v1";
+let state={correct:0,streak:0,unlocked:0,totalStars:0};
+try{const saved=JSON.parse(localStorage.getItem(key));if(saved)state={...state,...saved};}catch(e){}
+let x=3,y=4,waiting=false;
+let timerId=null, secondsLeft=15, audioUrl=null, questionStartedAt=0;
+let birdAudio=null, lastSoundBird=-1;
+const $=id=>document.getElementById(id);
+function save(){try{localStorage.setItem(key,JSON.stringify(state));}catch(e){}}
+function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
+function paintTimer(){
+ $("time").textContent=secondsLeft;
+ $("timerBar").style.width=(secondsLeft/15*100)+"%";
+ $("timerBar").style.background=secondsLeft<=5?"#d95b4b":"#39a66f";
+}
+function startTimer(){
+ stopTimer();secondsLeft=15;questionStartedAt=Date.now();paintTimer();
+ timerId=setInterval(()=>{
+  secondsLeft--;paintTimer();
+  if(secondsLeft<=0){
+   stopTimer();waiting=true;state.streak=0;save();render();
+   $("feedback").textContent="時間切れ！つぎの問題でまた挑戦しよう。";
+   $("feedback").className="bad";$("next").style.display="inline-block";
+  }
+ },1000);
+}
+function question(){
+ x=1+Math.floor(Math.random()*9);y=1+Math.floor(Math.random()*9);
+ $("a").textContent=x;$("b").textContent=y;$("answer").value="";
+ waiting=false;$("next").style.display="none";$("replaySound").style.display="none";
+ $("soundNotice").textContent="";startTimer();
+}
+function render(){
+ $("correct").textContent=state.correct;$("count").textContent=state.unlocked+" / 30";$("streak").textContent=state.streak;$("totalStars").textContent=state.totalStars||0;
+ const remainder=state.correct%10;const pct=state.unlocked>=30?100:remainder*10;
+ $("bar").style.width=pct+"%";
+ $("progressText").textContent=state.unlocked>=30?"図鑑コンプリート！おめでとう！":`あと${10-remainder}問正解で、${birds[state.unlocked][0]}を発見！`;
+ $("collection").innerHTML="";
+ birds.forEach((bird,i)=>{
+  const card=document.createElement("div");card.className="bird";
+  if(i<state.unlocked){
+   const img=document.createElement("img");img.alt=bird[0];img.loading="lazy";img.id="birdimg"+i;img.src=imageCache[i]||"";
+   img.onerror=()=>{img.style.display="none";const fallback=document.createElement("div");fallback.className="locked";fallback.textContent="🐦";card.insertBefore(fallback,card.firstChild);};
+   card.appendChild(img);
+   const meta=document.createElement("div");meta.className="meta";meta.innerHTML=`<strong>${bird[0]}</strong><small>発見済み</small>`;card.appendChild(meta);
+   if(!imageCache[i])loadBirdImage(i);
+  }else{
+   const lock=document.createElement("div");lock.className="locked";lock.textContent="🔒";card.appendChild(lock);
+   const meta=document.createElement("div");meta.className="meta";meta.innerHTML=`<strong>？？？</strong><small>${(i+1)*10}問正解で発見</small>`;card.appendChild(meta);
+  }
+  $("collection").appendChild(card);
+ });
+}
+let imageCache={};
+function loadBirdImage(i){
+ const q=encodeURIComponent('"'+birds[i][0]+'" bird');
+ const url=`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${q}&gsrnamespace=6&gsrlimit=1&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json&origin=*`;
+ fetch(url).then(r=>r.json()).then(data=>{
+  const pages=data.query&&data.query.pages?Object.values(data.query.pages):[];
+  const info=pages[0]&&pages[0].imageinfo&&pages[0].imageinfo[0];
+  if(info){imageCache[i]=info.thumburl||info.url;const img=$("birdimg"+i);if(img)img.src=imageCache[i];}
+ }).catch(()=>{});
+}
+function loadBirdSound(i){
+ if(i<0||i>=birds.length)return Promise.resolve(null);
+ if(birdAudioCache[i])return Promise.resolve(birdAudioCache[i]);
+ const q=encodeURIComponent(birdEnglish[i]+" bird call filemime:audio");
+ const api=`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${q}&gsrnamespace=6&gsrlimit=5&prop=imageinfo&iiprop=url|mime&format=json&origin=*`;
+ return fetch(api).then(r=>r.json()).then(data=>{
+  const pages=data.query&&data.query.pages?Object.values(data.query.pages):[];
+  const item=pages.map(p=>p.imageinfo&&p.imageinfo[0]).find(info=>info&&info.mime&&info.mime.startsWith("audio/"));
+  if(item){birdAudioCache[i]=item.url;return item.url;}
+  return null;
+ }).catch(()=>null);
+}
+const birdAudioCache={};
+function playBirdSound(i){
+ $("soundNotice").textContent=birds[i][0]+"の鳴き声をさがしています…";
+ loadBirdSound(i).then(url=>{
+  if(!url){$("soundNotice").textContent="この野鳥の鳴き声は見つかりませんでした。";return;}
+  if(birdAudio){birdAudio.pause();birdAudio=null;}
+  birdAudio=new Audio(url);birdAudio.preload="auto";
+  birdAudio.play().then(()=>{
+   $("soundNotice").textContent="♪ "+birds[i][0]+"の鳴き声！";
+   $("replaySound").style.display="inline-block";
+  }).catch(()=>{
+   $("soundNotice").textContent="音声を再生できませんでした。もう一度ボタンを押してね。";
+   $("replaySound").style.display="inline-block";
+  });
+ }).catch(()=>{$("soundNotice").textContent="鳴き声を読み込めませんでした。";});
+}
+function reveal(i){
+ $("modalName").textContent=birds[i][0];$("modalDesc").textContent=birds[i][1];
+ $("modalImg").src=imageCache[i]||"";
+ $("modalImg").style.display=imageCache[i]?"block":"none";
+ $("overlay").style.display="grid";
+}
+
+// 数字ボタン：スマホでも確実に反応するよう、親要素でクリックを受け取る
+$("answer").readOnly = true;
+$("answer").inputMode = "none";
+$("keypad")?.addEventListener("click", (event) => {
+ const button = event.target.closest("button[data-key]");
+ if (!button || waiting) return;
+ const pressed = button.dataset.key;
+ const field = $("answer");
+ if (pressed === "clear") {
+  field.value = "";
+ } else if (pressed === "back") {
+  field.value = field.value.slice(0, -1);
+ } else if (/^\\d$/.test(pressed) && field.value.length < 2) {
+  field.value += pressed;
+ }
+ // iOS等でも表示更新を明示
+ field.dispatchEvent(new Event("input", {bubbles:true}));
+});
+$("form").addEventListener("submit",e=>{
+ e.preventDefault();if(waiting)return;
+ const raw=$("answer").value;
+ if(raw===""){ $("feedback").textContent="答えを入れてね！";$("feedback").className="bad";return;}
+ if(Number(raw)===x*y){
+  const elapsed=(Date.now()-questionStartedAt)/1000;
+  const earnedStars=elapsed<=5?3:(elapsed<=10?2:1);
+  stopTimer();state.correct++;state.streak++;state.totalStars=(state.totalStars||0)+earnedStars;save();render();
+  const starText="★".repeat(earnedStars)+"☆".repeat(3-earnedStars);
+  const speedText=earnedStars===3?"超はやい！":earnedStars===2?"いいスピード！":"あせらず正解！";
+  $("feedback").textContent=`せいかい！ ${starText} ${speedText}`+(state.streak>=3?`　${state.streak}問連続！`:"");
+  $("feedback").className="good";waiting=true;
+  if(state.streak>0&&state.streak%5===0){
+   const soundIndex=Math.min(Math.max(state.unlocked-1,0),29);
+   lastSoundBird=soundIndex;playBirdSound(soundIndex);
+  }
+  if(state.correct%10===0&&state.unlocked<30){
+   const idx=state.unlocked;state.unlocked++;save();render();
+   setTimeout(()=>reveal(idx),350);
+  }
+  $("next").style.display="inline-block";
+ }else{
+  state.streak=0;save();render();$("feedback").textContent="おしい！ もう一度考えてみよう。";$("feedback").className="bad";$("answer").value="";
+ }
+});
+$("replaySound").addEventListener("click",()=>{if(lastSoundBird>=0)playBirdSound(lastSoundBird);});
+$("next").addEventListener("click",()=>{question();$("feedback").textContent="";});
+$("close").addEventListener("click",()=>{$("overlay").style.display="none";});
+render();question();
+</script>
+</body>
+</html>
