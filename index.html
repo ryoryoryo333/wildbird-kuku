@@ -229,7 +229,7 @@ $("keypad")?.addEventListener("click", (event) => {
   field.value = "";
  } else if (pressed === "back") {
   field.value = field.value.slice(0, -1);
- } else if (/^\\d$/.test(pressed) && field.value.length < 2) {
+ } else if (/^\d$/.test(pressed) && field.value.length < 2) {
   field.value += pressed;
  }
  // iOS等でも表示更新を明示
