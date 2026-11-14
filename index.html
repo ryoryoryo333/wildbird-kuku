@@ -132,7 +132,7 @@ let state={correct:0,streak:0,unlocked:0,totalStars:0};
 try{const saved=JSON.parse(localStorage.getItem(key));if(saved)state={...state,...saved};}catch(e){}
 let x=3,y=4,waiting=false;
 let timerId=null, secondsLeft=15, audioUrl=null, questionStartedAt=0;
-let birdAudio=null, lastSoundBird=-1, nextSoundBird=0;
+let birdAudio=null, lastSoundBird=-1, nextSoundBird=0, birdSoundToken=0;
 const $=id=>document.getElementById(id);
 function save(){try{localStorage.setItem(key,JSON.stringify(state));}catch(e){}}
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
@@ -153,6 +153,8 @@ function startTimer(){
  },1000);
 }
 function question(){
+ stopBirdSound();
+ $("soundNotice").textContent="";
  x=1+Math.floor(Math.random()*9);y=1+Math.floor(Math.random()*9);
  $("a").textContent=x;$("b").textContent=y;$("answer").value="";
  waiting=false;$("next").style.display="none";$("replaySound").style.display="none";
@@ -215,9 +217,16 @@ function pickSoundBird(){
  const rare=Math.random()<0.15;
  return rare ? 20+Math.floor(Math.random()*10) : Math.floor(Math.random()*20);
 }
+function stopBirdSound(){
+ birdSoundToken++;
+ if(birdAudio){birdAudio.pause();birdAudio.currentTime=0;birdAudio=null;}
+ $("replaySound").style.display="none";
+}
 function playBirdSound(i){
+ const token=++birdSoundToken;
  $("soundNotice").textContent=birds[i][0]+"の鳴き声をさがしています…";
  loadBirdSound(i).then(url=>{
+  if(token!==birdSoundToken)return;
   if(!url){$("soundNotice").textContent="この野鳥の鳴き声は見つかりませんでした。";return;}
   if(birdAudio){birdAudio.pause();birdAudio=null;}
   birdAudio=birdAudioCache[i+":audio"]||new Audio(url);birdAudio.currentTime=0;birdAudio.preload="auto";
