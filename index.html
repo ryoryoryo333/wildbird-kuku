@@ -86,6 +86,18 @@ footer{text-align:center;color:#7b8a80;font-size:12px;margin-top:20px}
   <button id="close">図鑑に登録する！</button>
  </div>
 </div>
+<div class="overlay" id="soundPrizeOverlay" style="z-index:9">
+ <div class="modal">
+  <div style="font-size:54px;margin:6px">🎁</div>
+  <h2>鳴き声ゲット！</h2>
+  <p>宝箱から野鳥の鳴き声を見つけたよ！</p>
+  <div style="font-size:48px;margin:12px">🐦 🔊</div>
+  <h2 id="soundPrizeName"></h2>
+  <p id="soundPrizeStatus">タップすると鳴き声が聞けるよ！</p>
+  <button id="playPrizeSound">▶ 鳴き声を聞く</button>
+  <button class="secondary" id="closePrize" style="margin:8px">あとで聞く</button>
+ </div>
+</div>
 <script>
 const birds = [
  ["スズメ","身近な場所で見られる小さな野鳥。"],
@@ -132,7 +144,7 @@ let state={correct:0,streak:0,unlocked:0,totalStars:0};
 try{const saved=JSON.parse(localStorage.getItem(key));if(saved)state={...state,...saved};}catch(e){}
 let x=3,y=4,waiting=false;
 let timerId=null, secondsLeft=15, audioUrl=null, questionStartedAt=0;
-let birdAudio=null, lastSoundBird=-1, nextSoundBird=0, birdSoundToken=0;
+let birdAudio=null, lastSoundBird=-1, nextSoundBird=0, birdSoundToken=0, soundPrizeBird=-1;
 const $=id=>document.getElementById(id);
 function save(){try{localStorage.setItem(key,JSON.stringify(state));}catch(e){}}
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
@@ -153,14 +165,14 @@ function startTimer(){
  },1000);
 }
 function question(){
+ $("soundPrizeOverlay").style.display="none";
  stopBirdSound();
  $("soundNotice").textContent="";
  x=1+Math.floor(Math.random()*9);y=1+Math.floor(Math.random()*9);
  $("a").textContent=x;$("b").textContent=y;$("answer").value="";
  waiting=false;$("next").style.display="none";$("replaySound").style.display="none";
  $("soundNotice").textContent="";
- nextSoundBird=pickSoundBird();
- loadBirdSound(nextSoundBird).then(url=>{if(url){birdAudioCache[nextSoundBird+":audio"]=new Audio(url);birdAudioCache[nextSoundBird+":audio"].preload="auto";}});
+ nextSoundBird=-1;
  startTimer();
 }
 function render(){
@@ -213,9 +225,8 @@ function loadBirdSound(i){
 }
 const birdAudioCache={};
 function pickSoundBird(){
- // 約85%は身近な鳥、約15%は珍しい鳥の声を選ぶ
- const rare=Math.random()<0.15;
- return rare ? 20+Math.floor(Math.random()*10) : Math.floor(Math.random()*20);
+ // 30種類の野鳥から完全ランダムに選ぶ
+ return Math.floor(Math.random()*birds.length);
 }
 function stopBirdSound(){
  birdSoundToken++;
@@ -276,8 +287,13 @@ $("form").addEventListener("submit",e=>{
   const speedText=earnedStars===3?"超はやい！":earnedStars===2?"いいスピード！":"あせらず正解！";
   $("feedback").textContent=`せいかい！ ${starText} ${speedText}`+(state.streak>=3?`　${state.streak}問連続！`:"");
   $("feedback").className="good";waiting=true;
-  lastSoundBird=nextSoundBird;
-  playBirdSound(lastSoundBird);
+  if(Math.random()<0.10){
+   soundPrizeBird=pickSoundBird();
+   lastSoundBird=soundPrizeBird;
+   $("soundPrizeName").textContent=birds[soundPrizeBird][0];
+   $("soundPrizeStatus").textContent="タップすると鳴き声が聞けるよ！";
+   $("soundPrizeOverlay").style.display="grid";
+  }
   if(state.correct%10===0&&state.unlocked<30){
    const idx=state.unlocked;state.unlocked++;save();render();
    setTimeout(()=>reveal(idx),350);
@@ -288,6 +304,8 @@ $("form").addEventListener("submit",e=>{
  }
 });
 $("replaySound").addEventListener("click",()=>{if(lastSoundBird>=0)playBirdSound(lastSoundBird);});
+$("playPrizeSound").addEventListener("click",()=>{if(soundPrizeBird>=0)playBirdSound(soundPrizeBird);});
+$("closePrize").addEventListener("click",()=>{$("soundPrizeOverlay").style.display="none";stopBirdSound();});
 $("next").addEventListener("click",()=>{question();$("feedback").textContent="";});
 $("close").addEventListener("click",()=>{$("overlay").style.display="none";});
 $("closeImage").addEventListener("click",()=>{$("imageOverlay").style.display="none";});
