@@ -22,7 +22,7 @@ button{font:inherit;font-weight:750;border:0;border-radius:13px;padding:12px 20p
 .sound-notice{min-height:22px;text-align:center;font-size:13px;color:#916b20}.next{display:none;margin:14px auto 0}
 .birdhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.birdhead h2{margin:0;color:var(--green);font-size:21px}.small{font-size:13px;color:#718278}
 .collection{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;margin-top:14px}
-.bird{border:1px solid #dce9df;border-radius:16px;overflow:hidden;background:#fff}.bird img{display:block;width:100%;height:115px;object-fit:cover;background:#edf3ee}.bird .meta{padding:9px 10px}.bird strong{display:block}.bird small{color:#6c7e73}
+.bird{border:1px solid #dce9df;border-radius:16px;overflow:hidden;background:#fff}.bird img{display:block;width:100%;height:115px;object-fit:cover;background:#edf3ee;cursor:zoom-in}.bird .meta{padding:9px 10px}.bird strong{display:block}.bird small{color:#6c7e73}
 .locked{height:115px;display:grid;place-items:center;background:repeating-linear-gradient(135deg,#edf3ee,#edf3ee 10px,#e4ece6 10px,#e4ece6 20px);font-size:30px;color:#9aafa1}.locked + .meta{color:#87968c}
 .note{font-size:12px;line-height:1.6;color:#74847a;margin-top:12px}
 .overlay{position:fixed;inset:0;background:#10251dcc;display:none;place-items:center;padding:18px;z-index:5}.modal{background:white;border-radius:22px;max-width:440px;width:100%;padding:22px;text-align:center}.modal img{width:100%;height:210px;object-fit:cover;border-radius:14px;background:#edf3ee}.modal h2{color:var(--green);margin:12px 0 4px}.modal p{color:#5d7065}
@@ -51,6 +51,7 @@ footer{text-align:center;color:#7b8a80;font-size:12px;margin-top:20px}
   <input id="answer" type="text" inputmode="none" maxlength="2" readonly aria-label="答え" placeholder="？">
   <button type="submit">こたえる！</button>
  </form>
+ <button class="secondary next" id="next">つぎの問題へ</button>
  <div class="keypad" id="keypad" aria-label="数字入力パッド">
   <button type="button" class="key" data-key="1">1</button><button type="button" class="key" data-key="2">2</button><button type="button" class="key" data-key="3">3</button>
   <button type="button" class="key" data-key="4">4</button><button type="button" class="key" data-key="5">5</button><button type="button" class="key" data-key="6">6</button>
@@ -61,7 +62,6 @@ footer{text-align:center;color:#7b8a80;font-size:12px;margin-top:20px}
  <div class="small" style="text-align:center;margin-top:5px">★ 5秒以内：3つ ／ 10秒以内：2つ ／ 15秒以内：1つ</div>
  <div id="soundNotice" class="sound-notice" aria-live="polite"></div>
  <button type="button" class="secondary" id="replaySound" style="display:none;margin:8px auto">🐦 鳥の声をもう一度きく</button>
- <button class="secondary next" id="next">つぎの問題へ</button>
 </section>
 <section class="panel">
  <div class="birdhead"><h2>📖 野鳥コレクション</h2><span class="small">10問正解ごとに1種類</span></div>
@@ -70,6 +70,13 @@ footer{text-align:center;color:#7b8a80;font-size:12px;margin-top:20px}
 </section>
 <footer>学習の記録は、このブラウザ内に保存されます。</footer>
 </main>
+<div class="overlay" id="imageOverlay" style="z-index:8">
+ <div class="modal" style="max-width:720px;padding:14px">
+  <button type="button" class="secondary" id="closeImage" style="display:block;margin:0 0 10px auto">閉じる ✕</button>
+  <img id="largeBirdImg" alt="野鳥の拡大写真" style="width:100%;height:auto;max-height:75vh;object-fit:contain;background:#edf3ee">
+  <h2 id="largeBirdName"></h2>
+ </div>
+</div>
 <div class="overlay" id="overlay">
  <div class="modal">
   <div style="font-size:36px">🎉 🐦 🎉</div>
@@ -125,7 +132,7 @@ let state={correct:0,streak:0,unlocked:0,totalStars:0};
 try{const saved=JSON.parse(localStorage.getItem(key));if(saved)state={...state,...saved};}catch(e){}
 let x=3,y=4,waiting=false;
 let timerId=null, secondsLeft=15, audioUrl=null, questionStartedAt=0;
-let birdAudio=null, lastSoundBird=-1;
+let birdAudio=null, lastSoundBird=-1, nextSoundBird=0;
 const $=id=>document.getElementById(id);
 function save(){try{localStorage.setItem(key,JSON.stringify(state));}catch(e){}}
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
@@ -149,7 +156,10 @@ function question(){
  x=1+Math.floor(Math.random()*9);y=1+Math.floor(Math.random()*9);
  $("a").textContent=x;$("b").textContent=y;$("answer").value="";
  waiting=false;$("next").style.display="none";$("replaySound").style.display="none";
- $("soundNotice").textContent="";startTimer();
+ $("soundNotice").textContent="";
+ nextSoundBird=pickSoundBird();
+ loadBirdSound(nextSoundBird).then(url=>{if(url){birdAudioCache[nextSoundBird+":audio"]=new Audio(url);birdAudioCache[nextSoundBird+":audio"].preload="auto";}});
+ startTimer();
 }
 function render(){
  $("correct").textContent=state.correct;$("count").textContent=state.unlocked+" / 30";$("streak").textContent=state.streak;$("totalStars").textContent=state.totalStars||0;
@@ -162,6 +172,11 @@ function render(){
   if(i<state.unlocked){
    const img=document.createElement("img");img.alt=bird[0];img.loading="lazy";img.id="birdimg"+i;img.src=imageCache[i]||"";
    img.onerror=()=>{img.style.display="none";const fallback=document.createElement("div");fallback.className="locked";fallback.textContent="🐦";card.insertBefore(fallback,card.firstChild);};
+   img.addEventListener("click",()=>{
+    $("largeBirdImg").src=imageCache[i]||img.src;
+    $("largeBirdName").textContent=bird[0];
+    $("imageOverlay").style.display="grid";
+   });
    card.appendChild(img);
    const meta=document.createElement("div");meta.className="meta";meta.innerHTML=`<strong>${bird[0]}</strong><small>発見済み</small>`;card.appendChild(meta);
    if(!imageCache[i])loadBirdImage(i);
@@ -195,12 +210,17 @@ function loadBirdSound(i){
  }).catch(()=>null);
 }
 const birdAudioCache={};
+function pickSoundBird(){
+ // 約85%は身近な鳥、約15%は珍しい鳥の声を選ぶ
+ const rare=Math.random()<0.15;
+ return rare ? 20+Math.floor(Math.random()*10) : Math.floor(Math.random()*20);
+}
 function playBirdSound(i){
  $("soundNotice").textContent=birds[i][0]+"の鳴き声をさがしています…";
  loadBirdSound(i).then(url=>{
   if(!url){$("soundNotice").textContent="この野鳥の鳴き声は見つかりませんでした。";return;}
   if(birdAudio){birdAudio.pause();birdAudio=null;}
-  birdAudio=new Audio(url);birdAudio.preload="auto";
+  birdAudio=birdAudioCache[i+":audio"]||new Audio(url);birdAudio.currentTime=0;birdAudio.preload="auto";
   birdAudio.play().then(()=>{
    $("soundNotice").textContent="♪ "+birds[i][0]+"の鳴き声！";
    $("replaySound").style.display="inline-block";
@@ -247,10 +267,8 @@ $("form").addEventListener("submit",e=>{
   const speedText=earnedStars===3?"超はやい！":earnedStars===2?"いいスピード！":"あせらず正解！";
   $("feedback").textContent=`せいかい！ ${starText} ${speedText}`+(state.streak>=3?`　${state.streak}問連続！`:"");
   $("feedback").className="good";waiting=true;
-  if(state.streak>0&&state.streak%5===0){
-   const soundIndex=Math.min(Math.max(state.unlocked-1,0),29);
-   lastSoundBird=soundIndex;playBirdSound(soundIndex);
-  }
+  lastSoundBird=nextSoundBird;
+  playBirdSound(lastSoundBird);
   if(state.correct%10===0&&state.unlocked<30){
    const idx=state.unlocked;state.unlocked++;save();render();
    setTimeout(()=>reveal(idx),350);
@@ -263,6 +281,8 @@ $("form").addEventListener("submit",e=>{
 $("replaySound").addEventListener("click",()=>{if(lastSoundBird>=0)playBirdSound(lastSoundBird);});
 $("next").addEventListener("click",()=>{question();$("feedback").textContent="";});
 $("close").addEventListener("click",()=>{$("overlay").style.display="none";});
+$("closeImage").addEventListener("click",()=>{$("imageOverlay").style.display="none";});
+$("imageOverlay").addEventListener("click",e=>{if(e.target.id==="imageOverlay")$("imageOverlay").style.display="none";});
 render();question();
 </script>
 </body>
